@@ -1,2 +1,6 @@
 simulation_steps/
+__pycache__/
+data/
+results/
+checkpoints/
 

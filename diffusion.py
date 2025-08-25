@@ -2,7 +2,9 @@
 DDPM의 Forward/Reverse Process를 정의하는 스크립트
 """
 import torch
+from torch import nn
 import torch.nn.functional as F
+from torch import Tensor
 
 def linear_beta_schedule(timesteps, start=0.0001, end=0.02):
     """
@@ -11,7 +13,7 @@ def linear_beta_schedule(timesteps, start=0.0001, end=0.02):
     return torch.linspace(start, end, timesteps)
 
 class Diffusion:
-    def __init__(self, timesteps=1000, img_size=64, device="cuda"):
+    def __init__(self, timesteps: int = 1000, img_size: int = 64, device: str = "cuda") -> None:
         self.timesteps = timesteps
         self.img_size = img_size
         self.device = device
@@ -29,7 +31,7 @@ class Diffusion:
         # p(x_{t-1} | x_t, x_0) 계산에 필요한 변수들
         self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
 
-    def _get_index_from_list(self, vals, t, x_shape):
+    def _get_index_from_list(self, vals: Tensor, t: list, x_shape: tuple) -> Tensor:
         """
         특정 timestep t에 해당하는 값을 가져와서 이미지 배치 차원에 맞게 변환
         """
@@ -37,7 +39,7 @@ class Diffusion:
         out = vals.gather(-1, t)
         return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(t.device)
 
-    def q_sample(self, x_0, t, noise=None):
+    def q_sample(self, x_0: Tensor, t: int, noise=None) -> Tensor:
         """
         Forward Process: x_0에서 x_t를 샘플링
         x_t = sqrt(alpha_hat_t) * x_0 + sqrt(1 - alpha_hat_t) * noise
@@ -54,7 +56,7 @@ class Diffusion:
         return mean + variance
 
     @torch.no_grad()
-    def p_sample(self, model, x, t, t_index):
+    def p_sample(self, model: nn.Module, x: Tensor, t: int, t_index: list) -> Tensor:
         """
         Reverse Process: 모델을 이용해 x_t에서 x_{t-1}을 샘플링
         """
@@ -75,7 +77,7 @@ class Diffusion:
             return model_mean + torch.sqrt(posterior_variance_t) * noise
 
     @torch.no_grad()
-    def p_sample_loop(self, model, shape):
+    def p_sample_loop(self, model: nn.Module, shape: tuple) -> Tensor:
         """
         전체 샘플링 루프: T부터 0까지 진행
         """
@@ -94,8 +96,9 @@ class Diffusion:
 if __name__ == '__main__':
     # Diffusion 프로세스 테스트
     diffusion = Diffusion(timesteps=1000)
-    x_0 = torch.randn(4, 3, 64, 64).to("cuda")
-    t = torch.randint(0, 1000, (4,)).to("cuda")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    x_0 = torch.randn(4, 3, 64, 64).to(device)
+    t = torch.randint(0, 1000, (4,)).to(device)
     x_t = diffusion.q_sample(x_0, t)
     print(f"Original shape: {x_0.shape}")
     print(f"Noisy shape: {x_t.shape}")

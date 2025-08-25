@@ -2,7 +2,9 @@
 CelebA 데이터셋으로 DDPM 모델을 학습시키는 메인 스크립트
 """
 import os
+from typing import Type, Callable
 import torch
+from torch import Tensor
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -39,7 +41,12 @@ def get_data():
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     return dataloader
 
-def train(model, diffusion, dataloader, optimizer, loss_fn, epoch):
+def train(model: nn.Module, 
+          diffusion: Diffusion, 
+          dataloader: DataLoader, 
+          optimizer: torch.optim.Optimizer, 
+          loss_fn: Callable[[Tensor, Tensor], Tensor], 
+          epoch: int) -> None:
     """
     한 에폭(epoch) 동안의 학습을 진행합니다.
     """
@@ -74,7 +81,7 @@ def train(model, diffusion, dataloader, optimizer, loss_fn, epoch):
     avg_loss = total_loss / len(dataloader)
     print(f"Epoch {epoch+1}/{EPOCHS} | Average Loss: {avg_loss:.4f}")
 
-def sample_images(model, diffusion, epoch, n_images=16):
+def sample_images(model: nn.Module, diffusion: Diffusion, epoch: int, n_images: int = 16) -> None:
     """
     현재 모델 상태에서 이미지를 샘플링하여 저장합니다.
     """

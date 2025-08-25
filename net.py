@@ -3,6 +3,7 @@ DDPM에서 노이즈 예측을 위해 사용될 U-Net 모델 아키텍처
 참고: https://github.com/lucidrains/denoising-diffusion-pytorch
 """
 import torch
+from torch import Tensor
 import torch.nn as nn
 import math
 
@@ -10,11 +11,11 @@ class SinusoidalPositionEmbeddings(nn.Module):
     """
     Transformer에서 영감을 받은 시간(t)에 대한 Sinusoidal Position Embedding
     """
-    def __init__(self, dim):
+    def __init__(self, dim: int) -> None:
         super().__init__()
         self.dim = dim
 
-    def forward(self, time):
+    def forward(self, time: int) -> Tensor:
         device = time.device
         half_dim = self.dim // 2
         embeddings = math.log(10000) / (half_dim - 1)
@@ -25,7 +26,7 @@ class SinusoidalPositionEmbeddings(nn.Module):
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2 + Time Embedding"""
-    def __init__(self, in_channels, out_channels, time_emb_dim):
+    def __init__(self, in_channels: int, out_channels: int, time_emb_dim: int) -> None:
         super().__init__()
         self.time_mlp = nn.Linear(time_emb_dim, out_channels)
         self.double_conv = nn.Sequential(
@@ -37,7 +38,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-    def forward(self, x, t):
+    def forward(self, x: Tensor, t: Tensor):
         # Time embedding을 더하기 전에 먼저 convolution을 적용합니다.
         h = self.double_conv(x)
         
@@ -50,7 +51,7 @@ class UNet(nn.Module):
     """
     DDPM을 위한 표준 U-Net 모델
     """
-    def __init__(self, img_channels=3, time_emb_dim=256):
+    def __init__(self, img_channels: int = 3, time_emb_dim: int = 256) -> None:
         super().__init__()
         
         # 시간 임베딩
@@ -89,7 +90,7 @@ class UNet(nn.Module):
         # Final output layer
         self.output = nn.Conv2d(64, img_channels, kernel_size=1)
 
-    def forward(self, x, timestep):
+    def forward(self, x: Tensor, timestep: Tensor) -> Tensor:
         t = self.time_mlp(timestep)
         
         # Downsampling
@@ -134,5 +135,6 @@ if __name__ == '__main__':
     x = torch.randn(4, 3, 64, 64).to(device)
     t = torch.randint(1, 1000, (4,)).to(device)
     predicted_noise = model(x, t)
+    print(f"device: {device}")
     print(f"Input shape: {x.shape}")
     print(f"Predicted noise shape: {predicted_noise.shape}")

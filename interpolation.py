@@ -15,7 +15,6 @@ DATA_PATH = "./data/celeba"
 CHECKPOINT_PATH = "./checkpoints"
 IMG_SIZE = 64
 TIMESTEPS = 1000
-DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 CHECKPOINT_FILE = "./checkpoints/ddpm_celeba_epoch_100.pth" # 불러올 모델 파일 경로
 SAVE_PATH = "./results/interpolation_result.png"
 save_dir = os.path.dirname(SAVE_PATH)
